@@ -42,16 +42,15 @@ class HttpServer:
 
         if HttpFields.QUERY in page:
             query = page.split(HttpFields.QUERY)[1]
-            print(f'Query: {query}')
+            # TODO: implement query handling
 
         filename, file_extension = self.extract_page_info(page)
         
-        print(f'html/{filename}{HttpFields.DELIMITER}{file_extension}')
         try:
             with open(f'html/{filename}{HttpFields.DELIMITER}{file_extension}', "r") as file:
-                return 'HTTP/1.0 200 OK\n\n' + file.read()
+                return self.format_http_response(200, file.read())
         except FileNotFoundError:
-            return f'HTTP/1.0 404 NOT FOUND\n\nFile Not Found'
+            return self.format_http_response(404, "File Not Found")
 
     @staticmethod
     def extract_page_info(page: str) -> (str, str):
@@ -64,6 +63,15 @@ class HttpServer:
             filename = "index"
 
         return filename, extension
+    
+    @staticmethod
+    def format_http_response(http_code: int, html: str) -> str:
+        _VERSION = 'HTTP/1.0'
+        match http_code:
+            case 200:
+                return f'{_VERSION} 200 OK\n\n{html}'
+            case _:
+                return f'{_VERSION} 404 NOT FOUND\n\n{html}'
     
 if __name__ == '__main__':
     HttpServer('0.0.0.0', 8080).start()
