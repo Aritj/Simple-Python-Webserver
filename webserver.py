@@ -1,10 +1,12 @@
 import socket
 import urllib.parse
+import json
 
 class HttpFields:
     QUERY = "?"
     QUERY_DELIMITER = "&"
     DELIMITER = "."
+    ROUTE_DELIMITER = "/"
 
 class HttpServer:
     DEFAULT_HOST = '0.0.0.0'
@@ -37,29 +39,29 @@ class HttpServer:
 
     def process_request(self, request: str):
         headers = request.split('\n')
-        http_request_method, page, http_version = headers[0].split()
+        http_request_method, url, http_version = headers[0].split()
 
         if http_request_method not in ['GET']:
             # TODO: Handle HTTP request methods, e.g. POST, PUT
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
             return self.format_http_response(501, f"{http_request_method} not implemented")
 
-        query_dict = {} if page.find(HttpFields.QUERY) == -1 else self.parse_query_string(page)
+        route, query_dict =  (url, {}) \
+            if url.find(HttpFields.QUERY) == -1 \
+            else self.parse_query_string(url)
         
         if query_dict:
             # TODO: implement custom query string handling
-            print(query_dict)
+            return json.dumps(query_dict, indent=4)
 
-        filename, file_extension = self.extract_page_info(page)
-        
         try:
-            with open(f'html/{filename}{HttpFields.DELIMITER}{file_extension}', "r") as file:
+            with open(f'www/{self.parse_route(route)}', "r") as file:
                 return self.format_http_response(200, file.read())
         except FileNotFoundError:
             return self.format_http_response(404, "File Not Found")
 
     @staticmethod
-    def parse_query_string(url_string: str) -> dict[str, str]:
+    def parse_query_string(url_string: str) -> (str, dict[str, str]):
         query_string = url_string[url_string.find(HttpFields.QUERY) + 1:]
         pairs = query_string.split(HttpFields.QUERY_DELIMITER)
 
@@ -68,20 +70,12 @@ class HttpServer:
             key, value = pair.split('=')
             query_dict[urllib.parse.unquote(key)] = urllib.parse.unquote(value)
 
-        return query_dict
+        return url_string.split(HttpFields.QUERY)[0], query_dict
     
     @staticmethod
-    def extract_page_info(page: str) -> (str, str):
-        page = page.removeprefix('/')
-        filename, extension = page.split(HttpFields.DELIMITER) \
-            if HttpFields.DELIMITER in page \
-            else (page, "html")
+    def parse_route(route: str) -> (str, list[str], str):
+        return route if len(route[1:]) else 'index.html'
         
-        if not filename:
-            filename = "index"
-
-        return filename, extension
-    
     @staticmethod
     def format_http_response(http_status_code: int, html: str) -> str:
         _VERSION = 'HTTP/1.0'
