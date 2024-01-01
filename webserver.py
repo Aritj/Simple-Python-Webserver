@@ -35,14 +35,17 @@ class HttpServer:
 
     def process_request(self, request: str):
         headers = request.split('\n')
-        http_request_type, page, http_version = headers[0].split()
+        http_request_method, page, http_version = headers[0].split()
 
-        if http_request_type not in ['GET']:
-            pass
+        if http_request_method not in ['GET']:
+            # TODO: implement other HTTP request methods
+            # https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
+            return self.format_http_response(501, f"{http_request_method} not implemented")
 
         if HttpFields.QUERY in page:
-            query = page.split(HttpFields.QUERY)[1]
-            # TODO: implement query handling
+            # TODO: implement query handling, e.g. http://ip:port/index.html?q=ari
+            query = page.split(HttpFields.QUERY)[1] # query = "q=ari"
+            return self.format_http_response(501, "Query string not implemented")
 
         filename, file_extension = self.extract_page_info(page)
         
@@ -65,13 +68,22 @@ class HttpServer:
         return filename, extension
     
     @staticmethod
-    def format_http_response(http_code: int, html: str) -> str:
+    def format_http_response(http_status_code: int, html: str) -> str:
         _VERSION = 'HTTP/1.0'
-        match http_code:
+        # TODO: implement missing http_status_codes
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+        match http_status_code:
             case 200:
                 return f'{_VERSION} 200 OK\n\n{html}'
-            case _:
+            case 400:
+                return f'{_VERSION} 400 BAD REQUEST\n\n{html}'
+            case 404:
                 return f'{_VERSION} 404 NOT FOUND\n\n{html}'
+            case 500:
+                return f'{_VERSION} 500 INTERNAL SERVER ERROR\n\n{html}'
+            case 501:
+                return f'{_VERSION} 501 NOT IMPLEMENTED\n\n{html}'
+
     
 if __name__ == '__main__':
     HttpServer('0.0.0.0', 8080).start()

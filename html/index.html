@@ -1,10 +1,20 @@
 <html>
 <head>
-    <title>Hello World</title>
+    <title>Home</title>
 </head>
 <body>
-    <h1>Hello World!</h1>
-    <p>Welcome to the index.html web page..</p>
-    <p>Here's a link to <a href="ipsum.html">Ipsum</a></p>
+    <!--This is essentially a test page to verify if HTML, CSS & JS is working.-->
+    <h1 style="font-family: monospace;">Welcome to the index.html web page.</h1>
+    <input type="text" id="number" value="0"/>
+    <input type="button" onclick="incrementValue()" value="Increment Value" />
+    <script>
+    function incrementValue()
+        {
+            var value = parseInt(document.getElementById('number').value, 10);
+            value = isNaN(value) ? 0 : value;
+            value++;
+            document.getElementById('number').value = value;
+        }
+    </script>
 </body>
 </html>
