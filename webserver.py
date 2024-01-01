@@ -1,7 +1,9 @@
 import socket
+import urllib.parse
 
 class HttpFields:
     QUERY = "?"
+    QUERY_DELIMITER = "&"
     DELIMITER = "."
 
 class HttpServer:
@@ -38,14 +40,15 @@ class HttpServer:
         http_request_method, page, http_version = headers[0].split()
 
         if http_request_method not in ['GET']:
-            # TODO: implement other HTTP request methods
+            # TODO: Handle HTTP request methods, e.g. POST, PUT
             # https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
             return self.format_http_response(501, f"{http_request_method} not implemented")
 
-        if HttpFields.QUERY in page:
-            # TODO: implement query handling, e.g. http://ip:port/index.html?q=ari
-            query = page.split(HttpFields.QUERY)[1] # query = "q=ari"
-            return self.format_http_response(501, "Query string not implemented")
+        query_dict = {} if page.find(HttpFields.QUERY) == -1 else self.parse_query_string(page)
+        
+        if query_dict:
+            # TODO: implement custom query string handling
+            print(query_dict)
 
         filename, file_extension = self.extract_page_info(page)
         
@@ -55,6 +58,18 @@ class HttpServer:
         except FileNotFoundError:
             return self.format_http_response(404, "File Not Found")
 
+    @staticmethod
+    def parse_query_string(url_string: str) -> dict[str, str]:
+        query_string = url_string[url_string.find(HttpFields.QUERY) + 1:]
+        pairs = query_string.split(HttpFields.QUERY_DELIMITER)
+
+        query_dict = {}
+        for pair in pairs:
+            key, value = pair.split('=')
+            query_dict[urllib.parse.unquote(key)] = urllib.parse.unquote(value)
+
+        return query_dict
+    
     @staticmethod
     def extract_page_info(page: str) -> (str, str):
         page = page.removeprefix('/')
